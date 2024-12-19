@@ -16,7 +16,6 @@ def start(message):
     
 @bot.bot_.message_handler(content_types=['photo', 'sticker'])
 def otv_na_sticker_(message):
-    print(1)
     """отправляет стикер в ответ на фото или стикер"""
     #отправляем стиекер 
     bot.bot_.otv_na_sticker(message)
