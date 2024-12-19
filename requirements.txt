@@ -1,0 +1,2 @@
+telebot == 4.24.0
+apscheduler == 3.10.4
