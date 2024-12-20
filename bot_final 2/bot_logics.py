@@ -2,65 +2,95 @@ from save_data import *
 from markups import *
 import telebot
 from telebot import types
+from creating_a_schedule import *
 import random
 from apscheduler.schedulers.background import BackgroundScheduler
 #from exceptions import TgException
 
 
-#читаем данные из файлов
-token = data.get_data_from_txt("token.txt")["token"]
-tasks = data.get_data_from_txt("tasks.txt")
-names = data.get_data_from_txt("names.txt")
+
 #списки назавний коробок и их назаниий в списке tasks
 dict_from_markap_to_key_task = {"Задачи на сегодня":"tasks for the day","Задачи на неделю":"tasks for the week","Проекты":"projects","Корзина":"basket","Готово":"done","Потом":"later", "TODO":"TODO"}
 dict_key_task_to_markap = {"tasks for the day":"Задачи на сегодня","tasks for the week":"Задачи на неделю","projects":"Проекты","basket":"Корзина","done":"Готово","later":"Потом", "TODO":"TODO"}
 #списки стикеров и их длины
-ls_stickers_motv = ["CAACAgIAAxkBAAENFFtnKya-Ol73bU-e6FeFvHR_2fXsNwACKlQAAni74Ukz4YY0Fcgi7zYE", "CAACAgIAAxkBAAENFVNnLLQ9kj3LnHiXwjdE2_e4WSPrUAAC9U4AAoYjgEh_p9O9NH2kUTYE"]
+ls_stickers_motv = data.get_data_from_txt("stickers_motv.txt")
+ls_stickers = data.get_data_from_txt("ls_stickers.txt")
 len_ls_stickers_motv = len(ls_stickers_motv) - 1
-ls_stickers = ["CAACAgIAAxkBAAENJIhnOiJ--BMj3HebjhzZZ9FcuKS_OQACWUIAAjfs6Uh_HZZzeWE60TYE", "CAACAgIAAxkBAAENJIZnOiJ2dyY9mUlCg2ZXCAW3j-CvvgACv0QAAiC4UEu7TjASIXBQyTYE", "CAACAgIAAxkBAAENJIRnOiJu5jq9p8gM8oVNfdHBCj5aUAACLDQAAtB4WEuNzxS2xQABY7w2BA", "CAACAgIAAxkBAAENJIBnOh-xYB_gmayc5K9VgqbVAAGbuuoAAkFZAAJxCLlJBhcQZoXbDvQ2BA", "CAACAgIAAxkBAAENJHFnOh3kgPgqWca-cfyAqwd6LsG95QACjRgAAgQOUUmoCZil16lX3DYE", "CAACAgIAAxkBAAENJG1nOh2rlZmbMbsWmKOjwy2p4jgUXQACtBUAAtIFyEvEgZTnl4Z7azYE", "CAACAgIAAxkBAAENJGtnOh2pFWJZyqevZDzlP5RttHl0WAACXxYAAgq6yUsjtyMt_mlHPjYE", "CAACAgIAAxkBAAENJGlnOh2BcMZU6iFlwatPxw6bz5VTVAACL0UAAlodQUhg9_z4F5aFHTYE", "CAACAgIAAxkBAAENJGdnOh15tzAkr91ahIJEKp-q_JLDrQACpzwAAjULyUv9CJLnbFrcljYE", "CAACAgIAAxkBAAENJGVnOh1iJQO7vVGNvBvHVsvB_kbdGwAC5DkAAhe_yUtoklwSU0XmKzYE", "CAACAgIAAxkBAAENJGNnOh1dqUSb58foIDw3-gdIjdaLFgACsj0AAkotwEvwKHztiZMfXjYE", "CAACAgIAAxkBAAENJGFnOh1P3QYD1CXES3suSpkYp9IDpQACZj4AAmWpKEjLdU768OjDFjYE"]
 len_ls_stickers = len(ls_stickers) - 1
 
 class tg_bot():
     def __init__(self):
+        #читаем данные из файлов
+        self.tasks = data.get_data_from_txt("tasks.txt")
+        self.names = data.get_data_from_txt("names.txt")
+        self.token = data.get_data_from_txt("token.txt")["token"]
         #создаём бота
-        self.bot_ = telebot.TeleBot(token)
+        self.bot_ = telebot.TeleBot(self.token)
         
         
     def alert(self):
         """напоминание"""
-        for i in names:
-            if len(tasks[i]["tasks for the week"]) == 0:
+        for i in self.names:
+            if len(self.tasks[i]["tasks for the week"]) == 0:
+                #если нет задач
                 self.bot_.send_message(i, f"У вас ещё нет задач в Задачи на неделю. Стоит их добавить.")
                 continue
             msg = "" 
-            for i in range(len(tasks[i]["tasks for the week"])):
-                msg += f"{tasks[message.chat.id]['tasks for the week'][i]}\n"
+            for i in range(len(self.tasks[i]["tasks for the week"])):
+                msg += f"{self.tasks[message.chat.id]['tasks for the week'][i]}\n"
+            #отправить напоминание о том, что нужно сделать пользователю
             self.bot_.send_message(i, msg)
 
     def progress(self):
-        for i in names:
-            self.bot_.send_message(i, f"за эту: {tasks[i]['counter of completed tasks for this week']}, за прошлую: {tasks[i]['counter of completed tasks for the past week']}")
-            tasks[i]["counter of completed tasks for the past week"] = tasks[i]["counter of completed tasks for this week"]
+        """Показывает статистку двух последних недель и обновляет неделю"""
+        for i in self.names:
+            #создать фото таблицы
+            Graph(self.tasks[i]["counter of completed tasks for the past week"], self.tasks[i]["counter of completed tasks for this week"])
+            #отправить фото пользователю
+            img = open('graphic.png', 'rb')
+            self.bot_.send_photo(i, img)
+            img.close()
+            #обновление недель
+            self.tasks[i]["counter of completed tasks for the past week"] = self.tasks[i]["counter of completed tasks for this week"]
+            self.tasks[i]["counter of completed tasks for this week"] = 0
+
+    def show_progress(self, message):
+        """Показывает статистку двух последних недель"""
+        #создать фото таблицы
+        Graph(self.tasks[message.chat.id]["counter of completed tasks for the past week"], self.tasks[message.chat.id]["counter of completed tasks for this week"])
+        #отправить фото пользователю
+        img = open('graphic.png', 'rb')
+        self.bot_.send_photo(message.chat.id, img)
+        img.close()
+
+    def save_data_week(self):
+        """еженедельное сохранение данных"""
+        data.save_data_in_txt("tasks.txt", self.tasks)
+        data.save_data_in_txt("names.txt", self.names)
     def weekly_activities(self):
-        """вызов напоминания"""
+        """вызов еженедельных функций"""
         #создаём объект который будет вызывать alert каждую неделю
         sched = BackgroundScheduler()
-        sched.add_job(self.alert, 'interval', seconds = 30)
-        sched.add_job(self.progress, 'interval', seconds = 30)#604800 секунд - неделя
+        #напоминание о том, что нужно сделать
+        sched.add_job(self.alert, 'interval', seconds = 604800)
+        #показать прогресс
+        sched.add_job(self.progress, 'interval', seconds = 604800)#604800 секунд - неделя
+        #сохранение данных
+        sched.add_job(self.save_data_week, 'interval', seconds = 604800)
         sched.start()
 
 
     def del_task(self, message):
         """удалить задачу"""
         #перебираем все коробки
-        for i in tasks[message.chat.id]:
+        for i in self.tasks[message.chat.id]:
             #в коробках перебираем задачи
-            for j in range(len(tasks[message.chat.id][i])):
+            for j in range(len(self.tasks[message.chat.id][i])):
                 #если задача начанается с написанного слова в сообщение, то удаляём её
-                if message.text in tasks[message.chat.id][i][j]:
-                    self.bot_.send_message(message.chat.id, f"Удалена: {tasks[message.chat.id][i][j]}", reply_markup = markup_tasks)
-                    tasks[message.chat.id][i].pop(j)
-                    tasks[message.chat.id]["counter of completed tasks for this week"] += 1
+                if message.text in self.tasks[message.chat.id][i][j]:
+                    self.bot_.send_message(message.chat.id, f"Удалена: {self.tasks[message.chat.id][i][j]}", reply_markup = markup_tasks)
+                    self.tasks[message.chat.id][i].pop(j)
+                    self.tasks[message.chat.id]["counter of completed tasks for this week"] += 1
                     return
         #иначе говорим, что задача не найдена
         self.bot_.send_message(message.chat.id, f"Задача не найдена. Нет такой задачи, которая начинается с {message.text}", reply_markup = markup_tasks)
@@ -70,7 +100,7 @@ class tg_bot():
         """добавить задачу часть 1"""
         try:
             #сохраняем задачу в tasks
-            tasks[message.chat.id]["save"] = dict_from_markap_to_key_task[message.text]
+            self.tasks[message.chat.id]["save"] = dict_from_markap_to_key_task[message.text]
             #передаём сообщение второй части
             self.bot_.send_message(message.chat.id, 'Введите задачу:', reply_markup = markup_key_tasks)
             self.bot_.register_next_step_handler(message, self.add_task_step_two)
@@ -84,7 +114,7 @@ class tg_bot():
         """добавить задачу часть 2"""
         try:
             #добавляем задачу и отправляем сообщение об успешном выполении
-            tasks[message.chat.id][tasks[message.chat.id]["save"]].append(message.text)
+            self.tasks[message.chat.id][self.tasks[message.chat.id]["save"]].append(message.text)
             self.bot_.send_message(message.chat.id, text = "Добавил задачу", reply_markup = markup_tasks)
         except:
             #отправляем сообщение об ошибке, если что-то пошло не так
@@ -95,7 +125,7 @@ class tg_bot():
         """переместить задачу часть 1"""
         #сохраняем, то куда мы хотим переместить задачу
         try:
-            tasks[message.chat.id]["save"] = dict_from_markap_to_key_task[message.text]
+            self.tasks[message.chat.id]["save"] = dict_from_markap_to_key_task[message.text]
             self.bot_.send_message(message.chat.id, 'Введите первые слова задачи:')
             self.bot_.register_next_step_handler(message, self.replace_task_step_two)
         except:
@@ -106,17 +136,17 @@ class tg_bot():
     def replace_task_step_two(self, message):
         """переместить задачу часть 2"""
         #перебираем все коробки
-        for i in tasks[message.chat.id]:
+        for i in self.tasks[message.chat.id]:
             #в коробках перебираем задачи
-            for j in range(len(tasks[message.chat.id][i])):
+            for j in range(len(self.tasks[message.chat.id][i])):
                 #если задача начанается с написанного слова в сообщение, то перемещаем его в сохранённую коробку
-                if message.text in tasks[message.chat.id][i][j]:
+                if message.text in self.tasks[message.chat.id][i][j]:
                     try:
-                        #перемещение задачи
-                        tasks[message.chat.id][tasks[message.chat.id]["save"]].append(tasks[message.chat.id][i][j])
-                        tasks[message.chat.id][i].pop(j)
                         #сообщение об успешном выполнении 
-                        self.bot_.send_message(message.chat.id, f"Перемещена: {tasks[message.chat.id][i][j]}", reply_markup = markup_tasks)
+                        self.bot_.send_message(message.chat.id, f"Перемещена: {self.tasks[message.chat.id][i][j]}", reply_markup = markup_tasks)
+                        #перемещение задачи
+                        self.tasks[message.chat.id][self.tasks[message.chat.id]["save"]].append(self.tasks[message.chat.id][i][j])
+                        self.tasks[message.chat.id][i].pop(j)
                     except:
                         #сообщение ошибки
                         self.bot_.send_message(message.chat.id, "Задача не перемещена😭😭😭😭", reply_markup = markup_tasks)
@@ -128,13 +158,13 @@ class tg_bot():
     def print_tasks(self, message):
         """показать все задачи в коробке"""
         #если нет задач, то ответим, что коробка пустая
-        if len(tasks[message.chat.id][dict_from_markap_to_key_task[message.text]]) == 0:
+        if len(self.tasks[message.chat.id][dict_from_markap_to_key_task[message.text]]) == 0:
             self.bot_.send_message(message.chat.id, f"У вас ещё нет задач в <<{message.text}>>", reply_markup = markup_start)
             return
         #иначе отправим все здачи
         msg = "" 
-        for i in range(len(tasks[message.chat.id][dict_from_markap_to_key_task[message.text]])):
-            msg += f"{tasks[message.chat.id][dict_from_markap_to_key_task[message.text]][i]}\n\n"
+        for i in range(len(self.tasks[message.chat.id][dict_from_markap_to_key_task[message.text]])):
+            msg += f"{self.tasks[message.chat.id][dict_from_markap_to_key_task[message.text]][i]}\n\n"
         self.bot_.send_message(message.chat.id, msg, reply_markup = markup_start)
 
 
@@ -153,7 +183,7 @@ class tg_bot():
         if message.text == "Нет":
             #добавляем в список и отпраляем сообщение, что всё прошло успешно
             self.bot_.send_message(message.chat.id, f'Задача добавлена в коробку <<{dict_key_task_to_markap[ls_key_task[step]]}>>', reply_markup = markup_start)
-            tasks[message.chat.id][ls_key_task[step]].append(tasks[message.chat.id]["save"])
+            self.tasks[message.chat.id][ls_key_task[step]].append(self.tasks[message.chat.id]["save"])
         elif message.text == "Да":
             #задаём следующий вопрос и перенаправляем на функцию следующего вопроса
             self.bot_.send_message(message.chat.id, text=ls_questions[step + 1], reply_markup = markup_yes_no)
@@ -177,7 +207,7 @@ class tg_bot():
     def cycle_gtd_step_one(self, message):
         """функция принимающая задачу из сообщения(сохранияет его в tasks) и ожидающая следующего сообщения для вызова следующей функции"""
         #сохраняем задачу
-        tasks[message.chat.id]["save"] = message.text
+        self.tasks[message.chat.id]["save"] = message.text
         #вызываем шаблон через функцию вопроса
         self.bot_.send_message(message.chat.id, text='Эта задача предполагает действия?', reply_markup = markup_yes_no)
         self.bot_.register_next_step_handler(message, self.cycle_gtd_step_alt_one)
@@ -218,11 +248,11 @@ class tg_bot():
         """принимет сообщение пользователя и номер вопроса, а после присылает ответ пользователю..."""
         if message.text == "Нет":
             key_task = "tasks for the week"
-            tasks[message.chat.id][key_task].append(tasks[message.chat.id]["save"])
+            self.tasks[message.chat.id][key_task].append(self.tasks[message.chat.id]["save"])
             self.bot_.send_message(message.chat.id, f'Задача добавлена в коробку <<{dict_key_task_to_markap[key_task]}>>', reply_markup = markup_start)
         elif message.text == "Да":
             key_task = "tasks for the day"
-            tasks[message.chat.id][key_task].append(tasks[message.chat.id]["save"])
+            self.tasks[message.chat.id][key_task].append(self.tasks[message.chat.id]["save"])
             self.bot_.send_message(message.chat.id, f'Задача добавлена в коробку <<{dict_key_task_to_markap[key_task]}>>', reply_markup = markup_start)
         elif message.text == "Вернуться":
             self.bot_.send_message(message.chat.id, text = "Окей", reply_markup = markup_start)
@@ -231,19 +261,4 @@ class tg_bot():
             self.bot_.register_next_step_handler(message, self.cycle_gtd_step_four)
         else:
             self.bot_.register_next_step_handler(message, self.cycle_gtd_step_five)
-
-
-
-
-
-
-
-
-          
-
-
-      
-
-
-
 
