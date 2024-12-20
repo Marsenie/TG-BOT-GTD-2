@@ -8,6 +8,7 @@ class Graph:
     self.task_week_last = task_week_last
     create_graph()
 
+  #создаем график и сохраняем его картинкой png
   def create_graph():
     plt.figure(figsize=(10, 4))
     x = ['last week', 'this week']
