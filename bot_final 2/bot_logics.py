@@ -83,9 +83,10 @@ class tg_bot():
             #добавляем задачу и отправляем сообщение об успешном выполении
             tasks[message.chat.id][tasks[message.chat.id]["save"]].append(message.text)
             self.bot_.send_message(message.chat.id, text = "Добавил задачу", reply_markup = markup_tasks)
-        except:
+        except TgException:
             #отправляем сообщение об ошибке, если что-то пошло не так
-            self.bot_.send_message(message.chat.id, text = "Произошла ошибка((((", reply_markup = markup_tasks)
+            self.bot_.send_message(message.chat.id, text='Произошла ошибка((((', reply_markup = markup_tasks)
+            raise TgException(f'Произошла ошибка((( в методе add_task_step_two; message.text = {message.text}; message.chat.id = {message.chat.id}')
 
 
     def replace_task_step_one(self, message):
