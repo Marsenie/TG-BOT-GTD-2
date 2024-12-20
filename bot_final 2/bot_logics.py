@@ -4,6 +4,7 @@ import telebot
 from telebot import types
 import random
 from apscheduler.schedulers.background import BackgroundScheduler
+from exceptions import TgException
 
 #читаем данные из файлов
 token = data.get_data_from_txt("token.txt")["token"]
