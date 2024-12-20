@@ -2,13 +2,14 @@ from bot_logics import *
 
 #создаём бота
 bot = tg_bot()
-    
+
+
 @bot.bot_.message_handler(commands=['start'])
 def start(message):
     """Добавление новых пользователей и приветственное сообщение"""
     #добавляем пользователя в словари tasks и names, если его ещё там нет
     if message.chat.id not in tasks:
-        tasks[message.chat.id] = {"tasks for the day": [], "tasks for the week": [], "projects": [], "basket": [], "done": [], "later": [], "TODO":[], "save":""}
+        tasks[message.chat.id] = {"tasks for the day": [], "tasks for the week": [], "projects": [], "basket": [], "done": [], "later": [], "TODO":[], "save":"", "counter of completed tasks for this week" : 0, "counter of completed tasks for the past week" : 0}
         names[message.chat.id] = message.from_user.username, message.from_user.first_name, message.from_user.last_name
     #отправляем приветственное сообщение
     bot.bot_.send_message(message.chat.id, text="Привет, {0.first_name}! Я - GTD бот. Буду помогать тебе с составлением расписания.".format(message.from_user), reply_markup=markup_start)
