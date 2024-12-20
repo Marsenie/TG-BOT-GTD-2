@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+#этот класс создает график показывающий количество выполненных задач за прощедщие две недели, чтобы сравнить продуктивность
 class Graph:
   def __init__(self, task_week_last, task_week_past):
     self.task_week_past = task_week_past
