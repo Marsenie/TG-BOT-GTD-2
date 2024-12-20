@@ -4,7 +4,8 @@ import telebot
 from telebot import types
 import random
 from apscheduler.schedulers.background import BackgroundScheduler
-from exceptions import TgException
+#from exceptions import TgException
+
 
 #читаем данные из файлов
 token = data.get_data_from_txt("token.txt")["token"]
@@ -23,9 +24,7 @@ class tg_bot():
     def __init__(self):
         #создаём бота
         self.bot_ = telebot.TeleBot(token)
-        #запускаем бота
-        #self.bot_.infinity_polling()
-    
+        
         
     def alert(self):
         """напоминание"""
@@ -36,14 +35,18 @@ class tg_bot():
             msg = "" 
             for i in range(len(tasks[i]["tasks for the week"])):
                 msg += f"{tasks[message.chat.id]['tasks for the week'][i]}\n"
-            self.bot_.send_message(i, msg, reply_markup = markup_start)
+            self.bot_.send_message(i, msg)
 
-        
-    def сall_alert(self):
+    def progress(self):
+        for i in names:
+            self.bot_.send_message(i, f"за эту: {tasks[i]['counter of completed tasks for this week']}, за прошлую: {tasks[i]['counter of completed tasks for the past week']}")
+            tasks[i]["counter of completed tasks for the past week"] = tasks[i]["counter of completed tasks for this week"]
+    def weekly_activities(self):
         """вызов напоминания"""
         #создаём объект который будет вызывать alert каждую неделю
         sched = BackgroundScheduler()
-        sched.add_job(self.alert, 'interval', seconds = 604800)#604800 секунд - неделя
+        sched.add_job(self.alert, 'interval', seconds = 30)
+        sched.add_job(self.progress, 'interval', seconds = 30)#604800 секунд - неделя
         sched.start()
 
 
@@ -57,6 +60,7 @@ class tg_bot():
                 if message.text in tasks[message.chat.id][i][j]:
                     self.bot_.send_message(message.chat.id, f"Удалена: {tasks[message.chat.id][i][j]}", reply_markup = markup_tasks)
                     tasks[message.chat.id][i].pop(j)
+                    tasks[message.chat.id]["counter of completed tasks for this week"] += 1
                     return
         #иначе говорим, что задача не найдена
         self.bot_.send_message(message.chat.id, f"Задача не найдена. Нет такой задачи, которая начинается с {message.text}", reply_markup = markup_tasks)
@@ -67,7 +71,6 @@ class tg_bot():
         try:
             #сохраняем задачу в tasks
             tasks[message.chat.id]["save"] = dict_from_markap_to_key_task[message.text]
-            print(tasks[message.chat.id]["save"])
             #передаём сообщение второй части
             self.bot_.send_message(message.chat.id, 'Введите задачу:', reply_markup = markup_key_tasks)
             self.bot_.register_next_step_handler(message, self.add_task_step_two)
