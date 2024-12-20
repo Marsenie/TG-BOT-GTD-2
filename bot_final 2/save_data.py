@@ -1,8 +1,9 @@
 import ast
 
+
 class data():
-    #извлечение сохранённых дынных
     def get_data_from_txt(name):
+        """извлечение сохранённых дынных"""
         try:    
             with open(name) as f:
                 return ast.literal_eval(f.read())
@@ -11,8 +12,8 @@ class data():
             return dict()
 
         
-    #сохранение данных
     def save_data_in_txt(name, data):
+        """сохранение данных"""
         try:
             with open(name, "w") as f:    
                 f.write(str(data))
