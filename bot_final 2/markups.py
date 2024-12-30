@@ -1,4 +1,6 @@
+"""создание маркапов"""
 from telebot import types
+
 
 class create_markap():
     def __init__(self, list_name_btn, markap_row_width):
