@@ -15,7 +15,7 @@ class data():
             try:
                 with open(name, 'w') as f:
                     if name != "token.txt":
-                        f.write("[]")
+                        f.write("{}")
                     else:
                         f.write("{\"token\" : \"ВАШ ТОКЕН\"}")
                         raise ReadErr("ошибка чтения токена", f"создайте {name} в {os.getcwd()}, с содержимым: " + "{\"token\" : \"ВАШ ТОКЕН\"}")
